@@ -1,0 +1,34 @@
+{
+    "appKeys": {
+        "backgroundColor": 10,
+        "clockStrokeColor": 12,
+        "clockfaceColor": 11,
+        "disconnectWarning": 2
+    },
+    "capabilities": [
+        "configurable"
+    ],
+    "companyName": "Tor-Erik Klausen",
+    "longName": "TEK First Analog",
+    "projectType": "native",
+    "resources": {
+        "media": [
+            {
+                "file": "images/menu-icon-bw.png",
+                "menuIcon": true,
+                "name": "MENU_ICON",
+                "type": "png"
+            }
+        ]
+    },
+    "sdkVersion": "3",
+    "shortName": "TEK Analog",
+    "targetPlatforms": [
+        "basalt"
+    ],
+    "uuid": "62fe76eb-274c-4ddc-8cd5-746629a74162",
+    "versionLabel": "0.4",
+    "watchapp": {
+        "watchface": true
+    }
+}
