@@ -3,10 +3,7 @@ Pebble.addEventListener('ready', function() {
 });
 
 Pebble.addEventListener('showConfiguration', function() {
-  var url = 'http://static.demo2.frameworks.no/tek-test/';
-
-  console.log('Showing configuration page: ' + url);
-
+  var url = 'https://torerikk.github.io/simple_analog_pebbleface/config/index.html';
   Pebble.openURL(url);
 });
 
