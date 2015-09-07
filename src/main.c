@@ -7,8 +7,10 @@
 #define KEY_CLOCKSTROKE_COLOR 12
 #define KEY_DISCONNECT_WARNING 2
 
-#define HAND_MARGIN  10
+#define LONG_HAND_MARGIN  10
+#define SHORT_HAND_MARGIN 30
 #define FINAL_RADIUS 65
+#define CENTER_RADIUS 8
 
 #define ANIMATION_DURATION 500
 #define ANIMATION_DELAY    600
@@ -26,6 +28,7 @@ static GColor s_color_bg, s_color_face_bg, s_color_stroke;
 static GPoint s_center;
 static Time s_last_time, s_anim_time;
 static int s_radius = 0;
+static int s_center_circle_radius = 0;
 static bool s_animating = false;
 static bool s_disconnect_warning = false;
 
@@ -109,21 +112,26 @@ static void update_proc(Layer *layer, GContext *ctx) {
 
   // Plot hands
   GPoint minute_hand = (GPoint) {
-    .x = (int16_t)(sin_lookup(TRIG_MAX_ANGLE * mode_time.minutes / 60) * (int32_t)(s_radius - HAND_MARGIN) / TRIG_MAX_RATIO) + s_center.x,
-    .y = (int16_t)(-cos_lookup(TRIG_MAX_ANGLE * mode_time.minutes / 60) * (int32_t)(s_radius - HAND_MARGIN) / TRIG_MAX_RATIO) + s_center.y,
+    .x = (int16_t)(sin_lookup(TRIG_MAX_ANGLE * mode_time.minutes / 60) * (int32_t)(s_radius - LONG_HAND_MARGIN) / TRIG_MAX_RATIO) + s_center.x,
+    .y = (int16_t)(-cos_lookup(TRIG_MAX_ANGLE * mode_time.minutes / 60) * (int32_t)(s_radius - LONG_HAND_MARGIN) / TRIG_MAX_RATIO) + s_center.y,
   };
   GPoint hour_hand = (GPoint) {
-    .x = (int16_t)(sin_lookup(hour_angle) * (int32_t)(s_radius - (2 * HAND_MARGIN)) / TRIG_MAX_RATIO) + s_center.x,
-    .y = (int16_t)(-cos_lookup(hour_angle) * (int32_t)(s_radius - (2 * HAND_MARGIN)) / TRIG_MAX_RATIO) + s_center.y,
+    .x = (int16_t)(sin_lookup(hour_angle) * (int32_t)(s_radius - SHORT_HAND_MARGIN) / TRIG_MAX_RATIO) + s_center.x,
+    .y = (int16_t)(-cos_lookup(hour_angle) * (int32_t)(s_radius - SHORT_HAND_MARGIN) / TRIG_MAX_RATIO) + s_center.y,
   };
 
   // Draw hands with positive length only
-  if(s_radius > 2 * HAND_MARGIN) {
+  if(s_radius > SHORT_HAND_MARGIN) {
     graphics_draw_line(ctx, s_center, hour_hand);
   } 
-  if(s_radius > HAND_MARGIN) {
+  if(s_radius > LONG_HAND_MARGIN) {
     graphics_draw_line(ctx, s_center, minute_hand);
   }
+
+	// Center circle fill and outline
+  graphics_context_set_fill_color(ctx, s_color_face_bg);
+  graphics_fill_circle(ctx, s_center, s_center_circle_radius);
+  graphics_draw_circle(ctx, s_center, s_center_circle_radius);
 }
 
 static void handle_bluetooth(bool connected) {
@@ -209,16 +217,18 @@ static void inbox_received_handler(DictionaryIterator *iter, void *context) {
   //Tuple *twenty_four_hour_format_t = dict_find(iter, KEY_TWENTY_FOUR_HOUR_FORMAT);
 	bool updateFace = false;
 
-	if(disconnect_warning_t) {
-		s_disconnect_warning = disconnect_warning_t->value->int8;
-		
-		APP_LOG(APP_LOG_LEVEL_DEBUG, "disconnect warning setting changed: %d", (bool)s_disconnect_warning);
-		persist_write_bool(KEY_DISCONNECT_WARNING, s_disconnect_warning);
-		if(s_disconnect_warning) {
+	if(disconnect_warning_t && disconnect_warning_t->value->int32 > 0) {
+		if(s_disconnect_warning == false) {
 			init_connection_warning();
-		} else {
+		}
+		s_disconnect_warning = true;
+		persist_write_bool(KEY_DISCONNECT_WARNING, s_disconnect_warning);
+	} else {
+		if(s_disconnect_warning == true) {
 			deinit_connection_warning();
 		}
+		s_disconnect_warning = false;
+		persist_write_bool(KEY_DISCONNECT_WARNING, s_disconnect_warning);
 	}
 	
   if (background_color_t) {
@@ -268,7 +278,13 @@ static int anim_percentage(AnimationProgress dist_normalized, int max) {
 
 static void radius_update(Animation *anim, AnimationProgress dist_normalized) {
   s_radius = anim_percentage(dist_normalized, FINAL_RADIUS);
-
+	
+	if(s_radius < (int)CENTER_RADIUS) {
+		s_center_circle_radius = s_radius;
+	} else {
+		s_center_circle_radius = (int)CENTER_RADIUS;
+	}
+	
   layer_mark_dirty(s_canvas_layer);
 }
 
