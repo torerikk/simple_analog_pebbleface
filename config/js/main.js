@@ -7,23 +7,21 @@ function submitHandler() {
   var $submitButton = $('#submitButton');
 
   $submitButton.on('click', function() {
-    console.log('Submit');
-
     var return_to = getQueryParam('return_to', 'pebblejs://close#');
     document.location = return_to + encodeURIComponent(JSON.stringify(getAndStoreConfigData()));
   });
 }
-//clockfaceColorPicker //clockStrokeColorPicker
+
 function loadOptions() {
   var $backgroundColorPicker = $('#backgroundColorPicker');
   var $clockfaceColorPicker = $('#clockfaceColorPicker');
   var $clockStrokeColorPicker = $('#clockStrokeColorPicker');
   var $btWarningToggle = $('#btWarningToggle');
-	console.log($btWarningToggle);
+
   if (localStorage.backgroundColor) {
-    $backgroundColorPicker[0].value = localStorage.backgroundColor;
-    $clockfaceColorPicker[0].value = localStorage.clockfaceColor;
-    $clockStrokeColorPicker[0].value = localStorage.clockStrokeColor;
+    $backgroundColorPicker[0].value = '0x' + GColor.hexToSunny(localStorage.backgroundColor);
+    $clockfaceColorPicker[0].value = '0x' + GColor.hexToSunny(localStorage.clockfaceColor);
+    $clockStrokeColorPicker[0].value = '0x' + GColor.hexToSunny(localStorage.clockStrokeColor);
     $btWarningToggle[0].checked = localStorage.disconnectWarning === 'true';
   }
 }
@@ -35,12 +33,12 @@ function getAndStoreConfigData() {
   var $btWarningToggle = $('#btWarningToggle');
 
   var options = {
-    backgroundColor: $backgroundColorPicker.val(),
-    clockfaceColor: $clockfaceColorPicker.val(),
-    clockStrokeColor: $clockStrokeColorPicker.val(),
+    backgroundColor: '0x' + GColor.hexToNormal($backgroundColorPicker.val()),
+    clockfaceColor: '0x' + GColor.hexToNormal($clockfaceColorPicker.val()),
+    clockStrokeColor: '0x' + GColor.hexToNormal($clockStrokeColorPicker.val()),
     disconnectWarning: $btWarningToggle[0].checked
   };
-
+  
   localStorage.backgroundColor = options.backgroundColor;
   localStorage.clockfaceColor = options.clockfaceColor;
   localStorage.clockStrokeColor = options.clockStrokeColor;
