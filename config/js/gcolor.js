@@ -27,6 +27,13 @@ THE SOFTWARE.
 
 var GColor = (function () {
 
+  if (!String.prototype.startsWith) {
+    String.prototype.startsWith = function(searchString, position) {
+      position = position || 0;
+      return this.indexOf(searchString, position) === position;
+    };
+  }
+
   var mappingSunny = {
     '000000': '000000',
     '000055': '001e41',
@@ -93,7 +100,7 @@ var GColor = (function () {
     'ffff55': 'fff1b5',
     'ffffaa': 'fff6d3'
   };
-
+  
   var mappingNormal = {
     '000000': '000000',
     '001e41': '000055',
@@ -160,7 +167,7 @@ var GColor = (function () {
     'fff1b5': 'ffff55',
     'fff6d3': 'ffffaa' 
   };
-
+  
   return {
     fromHex: GColorFromHex,
     toHex: GColorToHex,
@@ -168,7 +175,8 @@ var GColor = (function () {
     shortHex: GColorShortHex,
     expandHex: GColorExpandHex,
     toSunny: GColorToSunny,
-    fromSunny: GColorFromSunny
+    hexToSunny: HexToSunny,
+    hexToNormal: HexToNormal,
 
     ArmyGreen             : 212,
     BabyBlueEyes          : 235,
@@ -248,6 +256,7 @@ var GColor = (function () {
   }
 
   function GColorToHex(color) {
+  console.log(color);
     var r = (color & 48) >> 4;
     var g = (color & 12) >> 2;
     var b = (color & 3) >> 0;
@@ -278,10 +287,23 @@ var GColor = (function () {
   }
 
   function GColorToSunny(color) {
-    return GColorFromHex(mappingSunny[GColorToHex(color).toLowerCase()]);
+    return mappingSunny[GColorToHex(color).toLowerCase()];
   }
 
-  function GColorFromSunny(color) {
-    return GColorFromHex(mappingNormal[GColorToHex(color).toLowerCase()]);
+  function HexToSunny(color) {
+    color = color.toString(16);
+    if(color.startsWith('0x')) {
+      color = color.substring(2);
+    }
+    return mappingSunny[color.toLowerCase()];
   }
+  
+  function HexToNormal(sunnyColor) {
+    sunnyColor = sunnyColor.toString(16);
+    if(sunnyColor.startsWith('0x')) {
+      sunnyColor = sunnyColor.substring(2);
+    }
+    return mappingNormal[sunnyColor.toLowerCase()];
+  }
+
 }());
