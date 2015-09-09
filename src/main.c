@@ -18,6 +18,7 @@
 typedef struct {
   int hours;
   int minutes;
+	char mday[3];
 } Time;
 
 static Window *s_main_window;
@@ -64,6 +65,8 @@ static void tick_handler(struct tm *tick_time, TimeUnits changed) {
   s_last_time.hours = tick_time->tm_hour;
   s_last_time.hours -= (s_last_time.hours > 12) ? 12 : 0;
   s_last_time.minutes = tick_time->tm_min;
+	strftime(s_last_time.mday, 3, "%d", tick_time);
+	//s_last_time.mday = tick_time->tm_mday;
 
   /*for(int i = 0; i < 3; i++) {
     s_color_channels[i] = rand() % 256;
@@ -79,18 +82,37 @@ static int hours_to_minutes(int hours_out_of_12) {
   return (int)(float)(((float)hours_out_of_12 / 12.0F) * 60.0F);
 }
 
-static void update_proc(Layer *layer, GContext *ctx) {
-  // Color background?
-  graphics_context_set_fill_color(ctx, s_color_bg);
-  graphics_fill_rect(ctx, GRect(0, 0, 144, 168), 0, GCornerNone);
-
+/*static void connection_update_proc(Layer *layer, GContext *ctx) {
   graphics_context_set_stroke_color(ctx, s_color_stroke);
   graphics_context_set_stroke_width(ctx, 4);
+	graphics_context_set_antialiased(ctx, ANTIALIASING);
+	
+	
+}*/
+
+static void update_proc(Layer *layer, GContext *ctx) {
+  graphics_context_set_stroke_color(ctx, s_color_stroke);
+  graphics_context_set_stroke_width(ctx, 3);
 
   graphics_context_set_antialiased(ctx, ANTIALIASING);
-
+	
+	// Same color used for clockface and month bubble.
+	graphics_context_set_fill_color(ctx, s_color_face_bg);
+	
+	// Month bubble
+	GPoint month_center = (GPoint) {.x = 23, .y = 144 };
+	graphics_fill_circle(ctx, month_center, 20);
+	graphics_draw_circle(ctx, month_center, 20);
+	
+	//char buf[] = "00";
+	//snprintf(buf, 3, "%d", s_last_time.mday);
+	
+	graphics_context_set_text_color(ctx, s_color_stroke);
+	graphics_draw_text(ctx, s_last_time.mday, fonts_get_system_font(FONT_KEY_LECO_20_BOLD_NUMBERS), GRect(4, 132, 40, 161), GTextOverflowModeFill, GTextAlignmentCenter, NULL);
+	
   // White clockface
-  graphics_context_set_fill_color(ctx, s_color_face_bg);
+	
+  //graphics_context_set_fill_color(ctx, s_color_face_bg);
   graphics_fill_circle(ctx, s_center, s_radius);
 
   // Draw outline
@@ -99,6 +121,8 @@ static void update_proc(Layer *layer, GContext *ctx) {
   // Don't use current time while animating
   Time mode_time = (s_animating) ? s_anim_time : s_last_time;
 
+	graphics_context_set_stroke_width(ctx, 4);
+	
   // Adjust for minutes through the hour
   float minute_angle = TRIG_MAX_ANGLE * mode_time.minutes / 60;
   float hour_angle;
@@ -177,6 +201,8 @@ static void window_load(Window *window) {
 		s_color_bg = GColorWhite;
 	}
 	
+	window_set_background_color(window, s_color_bg);
+	
 	if (persist_read_int(KEY_CLOCKFACE_COLOR)) {
     int clockface_color = persist_read_int(KEY_CLOCKFACE_COLOR);
     s_color_face_bg = GColorFromHEX(clockface_color);
@@ -237,7 +263,8 @@ static void inbox_received_handler(DictionaryIterator *iter, void *context) {
     persist_write_int(KEY_BACKGROUND_COLOR, background_color);
 		
 		s_color_bg = GColorFromHEX(background_color);
-		updateFace = true;
+		window_set_background_color(s_main_window, s_color_bg);
+		//updateFace = true;
   }
 	
 	if (clockface_color_t) {
