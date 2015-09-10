@@ -23,7 +23,7 @@ typedef struct {
 
 static Window *s_main_window;
 static Layer *s_canvas_layer;
-static TextLayer *s_connection_layer;
+static Layer *s_connection_layer;
 
 static GColor s_color_bg, s_color_face_bg, s_color_stroke;
 static GPoint s_center;
@@ -32,6 +32,7 @@ static int s_radius = 0;
 static int s_center_circle_radius = 0;
 static bool s_animating = false;
 static bool s_disconnect_warning = false;
+static bool s_is_connected = false;
 
 /*************************** AnimationImplementation **************************/
 
@@ -82,13 +83,25 @@ static int hours_to_minutes(int hours_out_of_12) {
   return (int)(float)(((float)hours_out_of_12 / 12.0F) * 60.0F);
 }
 
-/*static void connection_update_proc(Layer *layer, GContext *ctx) {
-  graphics_context_set_stroke_color(ctx, s_color_stroke);
-  graphics_context_set_stroke_width(ctx, 4);
-	graphics_context_set_antialiased(ctx, ANTIALIASING);
+static void connection_update_proc(Layer *layer, GContext *ctx) {
+	if(!s_animating) {
+  	graphics_context_set_stroke_color(ctx, s_color_stroke);
+  	graphics_context_set_stroke_width(ctx, 3);
+
+  	graphics_context_set_antialiased(ctx, ANTIALIASING);
 	
-	
-}*/
+		if(s_is_connected) {
+			graphics_context_set_fill_color(ctx, s_color_face_bg);
+		} else {
+			graphics_context_set_fill_color(ctx, GColorRed);
+		}
+		
+		// Bluetooth bubble
+		GPoint month_center = (GPoint) {.x = 121, .y = 23 };
+		graphics_fill_circle(ctx, month_center, 20);
+		graphics_draw_circle(ctx, month_center, 20);	
+	}
+}
 
 static void update_proc(Layer *layer, GContext *ctx) {
   graphics_context_set_stroke_color(ctx, s_color_stroke);
@@ -98,18 +111,15 @@ static void update_proc(Layer *layer, GContext *ctx) {
 	
 	// Same color used for clockface and month bubble.
 	graphics_context_set_fill_color(ctx, s_color_face_bg);
+	if(!s_animating) {
+		// Month bubble
+		GPoint month_center = (GPoint) {.x = 23, .y = 144 };
+		graphics_fill_circle(ctx, month_center, 20);
+		graphics_draw_circle(ctx, month_center, 20);
 	
-	// Month bubble
-	GPoint month_center = (GPoint) {.x = 23, .y = 144 };
-	graphics_fill_circle(ctx, month_center, 20);
-	graphics_draw_circle(ctx, month_center, 20);
-	
-	//char buf[] = "00";
-	//snprintf(buf, 3, "%d", s_last_time.mday);
-	
-	graphics_context_set_text_color(ctx, s_color_stroke);
-	graphics_draw_text(ctx, s_last_time.mday, fonts_get_system_font(FONT_KEY_LECO_20_BOLD_NUMBERS), GRect(4, 132, 40, 161), GTextOverflowModeFill, GTextAlignmentCenter, NULL);
-	
+		graphics_context_set_text_color(ctx, s_color_stroke);
+		graphics_draw_text(ctx, s_last_time.mday, fonts_get_system_font(FONT_KEY_LECO_20_BOLD_NUMBERS), GRect(4, 132, 40, 161), GTextOverflowModeFill, GTextAlignmentCenter, NULL);
+	}
   // White clockface
 	
   //graphics_context_set_fill_color(ctx, s_color_face_bg);
@@ -159,7 +169,11 @@ static void update_proc(Layer *layer, GContext *ctx) {
 }
 
 static void handle_bluetooth(bool connected) {
-  text_layer_set_text(s_connection_layer, connected ? "" : "disconnected");
+  //text_layer_set_text(s_connection_layer, connected ? "" : "disconnected");
+	s_is_connected = connected;
+	if(s_connection_layer) {
+    layer_mark_dirty(s_connection_layer);
+  }
 	if(!connected) {
 		vibes_short_pulse();
 	}
@@ -182,17 +196,21 @@ static void window_load(Window *window) {
 
   s_center = grect_center_point(&window_bounds);
 
-	s_connection_layer = text_layer_create(GRect(0, window_bounds.size.h - 20, window_bounds.size.w, 20));
+	/*s_connection_layer = text_layer_create(GRect(0, window_bounds.size.h - 20, window_bounds.size.w, 20));
 	text_layer_set_text_color(s_connection_layer, s_color_stroke);
   text_layer_set_background_color(s_connection_layer, GColorClear);
   text_layer_set_font(s_connection_layer, fonts_get_system_font(FONT_KEY_GOTHIC_18));
   text_layer_set_text_alignment(s_connection_layer, GTextAlignmentCenter);
-	
+	*/
   s_canvas_layer = layer_create(window_bounds);
   layer_set_update_proc(s_canvas_layer, update_proc);
 	
+	s_connection_layer = layer_create(window_bounds);
+	layer_set_update_proc(s_connection_layer, connection_update_proc);
+	
+	layer_add_child(window_layer, s_connection_layer);
   layer_add_child(window_layer, s_canvas_layer);
-	layer_add_child(window_layer, text_layer_get_layer(s_connection_layer));
+	//layer_add_child(window_layer, text_layer_get_layer(s_connection_layer));
 	
 	if (persist_read_int(KEY_BACKGROUND_COLOR)) {
     int background_color = persist_read_int(KEY_BACKGROUND_COLOR);
@@ -228,7 +246,7 @@ static void window_load(Window *window) {
 static void window_unload(Window *window) {
   layer_destroy(s_canvas_layer);
 	if(s_connection_layer) {
-		text_layer_destroy(s_connection_layer);
+		layer_destroy(s_connection_layer);
 	}
 	deinit_connection_warning();
 }
