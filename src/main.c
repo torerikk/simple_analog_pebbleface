@@ -3,7 +3,7 @@
 #define ANTIALIASING true
 
 #define KEY_BACKGROUND_COLOR 10
-#define KEY_CLOCKFACE_COLOR 11
+#define KEY_CLOCKFACE_COLOR 13
 #define KEY_CLOCKSTROKE_COLOR 12
 #define KEY_DISCONNECT_WARNING 2
 
@@ -229,7 +229,7 @@ static void window_load(Window *window) {
   layer_add_child(window_layer, s_canvas_layer);
 	//layer_add_child(window_layer, text_layer_get_layer(s_connection_layer));
 	
-	if (persist_read_int(KEY_BACKGROUND_COLOR)) {
+	if (persist_exists(KEY_BACKGROUND_COLOR)) {
     int background_color = persist_read_int(KEY_BACKGROUND_COLOR);
     s_color_bg = GColorFromHEX(background_color);
   } else {
@@ -238,21 +238,25 @@ static void window_load(Window *window) {
 	
 	window_set_background_color(window, s_color_bg);
 	
-	if (persist_read_int(KEY_CLOCKFACE_COLOR)) {
+	if (persist_exists(KEY_CLOCKFACE_COLOR)) {
+		APP_LOG(APP_LOG_LEVEL_INFO, "face color set");
     int clockface_color = persist_read_int(KEY_CLOCKFACE_COLOR);
     s_color_face_bg = GColorFromHEX(clockface_color);
   } else {
 		s_color_face_bg = GColorWhite;
+		APP_LOG(APP_LOG_LEVEL_INFO, "face default color");
 	}
 	
-	if (persist_read_int(KEY_CLOCKSTROKE_COLOR)) {
+	if (persist_exists(KEY_CLOCKSTROKE_COLOR)) {
+		APP_LOG(APP_LOG_LEVEL_INFO, "clock stroke set");
     int clockstroke_color = persist_read_int(KEY_CLOCKSTROKE_COLOR);
     s_color_stroke = GColorFromHEX(clockstroke_color);
   } else {
+		APP_LOG(APP_LOG_LEVEL_INFO, "clock stroke default");
 		s_color_stroke = GColorBlack;
 	}
 	
-	if(persist_read_bool(KEY_DISCONNECT_WARNING)) {
+	if(persist_exists(KEY_DISCONNECT_WARNING)) {
 		s_disconnect_warning = persist_read_bool(KEY_DISCONNECT_WARNING);
 		if(s_disconnect_warning) {
 			init_connection_warning();
@@ -306,11 +310,13 @@ static void inbox_received_handler(DictionaryIterator *iter, void *context) {
   }
 	
 	if (clockface_color_t) {
+		
     int clockface_color = clockface_color_t->value->int32;
-
+		
     persist_write_int(KEY_CLOCKFACE_COLOR, clockface_color);
 		
 		s_color_face_bg = GColorFromHEX(clockface_color);
+		APP_LOG(APP_LOG_LEVEL_INFO,  "clock face color set and saved: %d", clockface_color );
 		updateFace = true;
   }
 	

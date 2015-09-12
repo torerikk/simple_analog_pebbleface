@@ -2,7 +2,7 @@
     "appKeys": {
         "backgroundColor": 10,
         "clockStrokeColor": 12,
-        "clockfaceColor": 11,
+        "clockfaceColor": 13,
         "disconnectWarning": 2
     },
     "capabilities": [
@@ -14,14 +14,14 @@
     "resources": {
         "media": [
             {
-                "file": "images/menu-icon-bw.png",
-                "menuIcon": true,
-                "name": "MENU_ICON",
+                "file": "images/bluetooth.png",
+                "name": "BLUETOOTH_ICON",
                 "type": "png"
             },
             {
-                "file": "images/bluetooth.png",
-                "name": "BLUETOOTH_ICON",
+                "file": "images/menu-icon-bw.png",
+                "menuIcon": true,
+                "name": "MENU_ICON",
                 "type": "png"
             }
         ]
@@ -32,7 +32,7 @@
         "basalt"
     ],
     "uuid": "62fe76eb-274c-4ddc-8cd5-746629a74162",
-    "versionLabel": "0.7",
+    "versionLabel": "0.8",
     "watchapp": {
         "watchface": true
     }
