@@ -18,6 +18,11 @@
                 "menuIcon": true,
                 "name": "MENU_ICON",
                 "type": "png"
+            },
+            {
+                "file": "images/bluetooth.png",
+                "name": "BLUETOOTH_ICON",
+                "type": "png"
             }
         ]
     },
@@ -27,7 +32,7 @@
         "basalt"
     ],
     "uuid": "62fe76eb-274c-4ddc-8cd5-746629a74162",
-    "versionLabel": "0.6",
+    "versionLabel": "0.7",
     "watchapp": {
         "watchface": true
     }

@@ -24,15 +24,18 @@ typedef struct {
 static Window *s_main_window;
 static Layer *s_canvas_layer;
 static Layer *s_connection_layer;
+static BitmapLayer *s_connection_bmp_layer;
 
 static GColor s_color_bg, s_color_face_bg, s_color_stroke;
-static GPoint s_center;
+static GPoint s_center, s_month_center, s_icon_center;
 static Time s_last_time, s_anim_time;
 static int s_radius = 0;
 static int s_center_circle_radius = 0;
-static bool s_animating = false;
+static bool s_animating = true;
 static bool s_disconnect_warning = false;
 static bool s_is_connected = false;
+
+static GBitmap *s_bluetooth_icon;
 
 /*************************** AnimationImplementation **************************/
 
@@ -62,7 +65,7 @@ static void animate(int duration, int delay, AnimationImplementation *implementa
 /************************************ UI **************************************/
 
 static void tick_handler(struct tm *tick_time, TimeUnits changed) {
-  // Store time
+  // Store timeud
   s_last_time.hours = tick_time->tm_hour;
   s_last_time.hours -= (s_last_time.hours > 12) ? 12 : 0;
   s_last_time.minutes = tick_time->tm_min;
@@ -91,15 +94,17 @@ static void connection_update_proc(Layer *layer, GContext *ctx) {
   	graphics_context_set_antialiased(ctx, ANTIALIASING);
 	
 		if(s_is_connected) {
-			graphics_context_set_fill_color(ctx, s_color_face_bg);
+      graphics_context_set_fill_color(ctx, s_color_face_bg);
+      layer_set_hidden(bitmap_layer_get_layer(s_connection_bmp_layer), true);
 		} else {
 			graphics_context_set_fill_color(ctx, GColorRed);
+      layer_set_hidden(bitmap_layer_get_layer(s_connection_bmp_layer), false);
 		}
 		
 		// Bluetooth bubble
-		GPoint month_center = (GPoint) {.x = 121, .y = 23 };
-		graphics_fill_circle(ctx, month_center, 20);
-		graphics_draw_circle(ctx, month_center, 20);	
+		graphics_fill_circle(ctx, s_icon_center, 20);
+		graphics_draw_circle(ctx, s_icon_center, 20);	
+
 	}
 }
 
@@ -113,9 +118,9 @@ static void update_proc(Layer *layer, GContext *ctx) {
 	graphics_context_set_fill_color(ctx, s_color_face_bg);
 	if(!s_animating) {
 		// Month bubble
-		GPoint month_center = (GPoint) {.x = 23, .y = 144 };
-		graphics_fill_circle(ctx, month_center, 20);
-		graphics_draw_circle(ctx, month_center, 20);
+		
+		graphics_fill_circle(ctx, s_month_center, 20);
+		graphics_draw_circle(ctx, s_month_center, 20);
 	
 		graphics_context_set_text_color(ctx, s_color_stroke);
 		graphics_draw_text(ctx, s_last_time.mday, fonts_get_system_font(FONT_KEY_LECO_20_BOLD_NUMBERS), GRect(4, 132, 40, 161), GTextOverflowModeFill, GTextAlignmentCenter, NULL);
@@ -195,13 +200,24 @@ static void window_load(Window *window) {
   GRect window_bounds = layer_get_bounds(window_layer);
 
   s_center = grect_center_point(&window_bounds);
+  s_month_center = (GPoint) {.x = 23, .y = 144 };
 
-	/*s_connection_layer = text_layer_create(GRect(0, window_bounds.size.h - 20, window_bounds.size.w, 20));
-	text_layer_set_text_color(s_connection_layer, s_color_stroke);
-  text_layer_set_background_color(s_connection_layer, GColorClear);
-  text_layer_set_font(s_connection_layer, fonts_get_system_font(FONT_KEY_GOTHIC_18));
-  text_layer_set_text_alignment(s_connection_layer, GTextAlignmentCenter);
-	*/
+  s_bluetooth_icon = gbitmap_create_with_resource(RESOURCE_ID_BLUETOOTH_ICON);
+  if (!s_bluetooth_icon) {
+    APP_LOG(APP_LOG_LEVEL_ERROR, "Image is NULL!");
+  }
+
+  s_icon_center = (GPoint) {.x = 121, .y = 23 };
+  GSize image_size = gbitmap_get_bounds(s_bluetooth_icon).size;
+  GRect image_frame = GRect(s_icon_center.x, s_icon_center.y, image_size.w, image_size.h);
+  image_frame.origin.x -= image_size.w / 2;
+  image_frame.origin.y -= image_size.h / 2;
+
+  s_connection_bmp_layer = bitmap_layer_create(image_frame);
+  bitmap_layer_set_bitmap(s_connection_bmp_layer, s_bluetooth_icon);
+  bitmap_layer_set_compositing_mode(s_connection_bmp_layer, GCompOpOr);
+  layer_set_hidden(bitmap_layer_get_layer(s_connection_bmp_layer), true);
+
   s_canvas_layer = layer_create(window_bounds);
   layer_set_update_proc(s_canvas_layer, update_proc);
 	
@@ -209,6 +225,7 @@ static void window_load(Window *window) {
 	layer_set_update_proc(s_connection_layer, connection_update_proc);
 	
 	layer_add_child(window_layer, s_connection_layer);
+  layer_add_child(window_layer, bitmap_layer_get_layer(s_connection_bmp_layer));
   layer_add_child(window_layer, s_canvas_layer);
 	//layer_add_child(window_layer, text_layer_get_layer(s_connection_layer));
 	
@@ -248,6 +265,9 @@ static void window_unload(Window *window) {
 	if(s_connection_layer) {
 		layer_destroy(s_connection_layer);
 	}
+  bitmap_layer_destroy(s_connection_bmp_layer);
+  gbitmap_destroy(s_bluetooth_icon);
+
 	deinit_connection_warning();
 }
 
