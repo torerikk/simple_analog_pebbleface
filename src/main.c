@@ -97,14 +97,13 @@ static void connection_update_proc(Layer *layer, GContext *ctx) {
       graphics_context_set_fill_color(ctx, s_color_face_bg);
       layer_set_hidden(bitmap_layer_get_layer(s_connection_bmp_layer), true);
 		} else {
+			
 			graphics_context_set_fill_color(ctx, GColorRed);
       layer_set_hidden(bitmap_layer_get_layer(s_connection_bmp_layer), false);
+			// Bluetooth bubble
+			graphics_fill_circle(ctx, s_icon_center, 20);
+			graphics_draw_circle(ctx, s_icon_center, 20);	
 		}
-		
-		// Bluetooth bubble
-		graphics_fill_circle(ctx, s_icon_center, 20);
-		graphics_draw_circle(ctx, s_icon_center, 20);	
-
 	}
 }
 
