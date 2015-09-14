@@ -9,7 +9,7 @@
         "configurable"
     ],
     "companyName": "Tor-Erik Klausen",
-    "longName": "TEK First Analog",
+    "longName": "TEK Watch01",
     "projectType": "native",
     "resources": {
         "media": [
@@ -27,12 +27,12 @@
         ]
     },
     "sdkVersion": "3",
-    "shortName": "TEK Analog",
+    "shortName": "TEK Watch01",
     "targetPlatforms": [
         "basalt"
     ],
     "uuid": "62fe76eb-274c-4ddc-8cd5-746629a74162",
-    "versionLabel": "1.0",
+    "versionLabel": "1.1",
     "watchapp": {
         "watchface": true
     }
