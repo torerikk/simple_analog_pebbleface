@@ -9,5 +9,7 @@ A simple analog watch face for Pebble Time based on [KS Watch Face by Chris Lewi
 ![](screenshots/screenshot_02.png)
 ![](screenshots/screenshot_03.png)
 
-Get it on the Pebble Appsstore: https://apps.getpebble.com/applications/55eae82309fc088aef00001a
+<a href="https://apps.getpebble.com/applications/55eae82309fc088aef00001a">
+  <img src="http://pblweb.com/badge/55eae82309fc088aef00001a/black/medium/" alt="TEK Watch01 is available on the Pebble appstore" />
+</a>
 
