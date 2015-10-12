@@ -1,25 +1,5 @@
-#include <pebble.h>
-
-#define ANTIALIASING true
-
-#define KEY_BACKGROUND_COLOR 10
-#define KEY_CLOCKFACE_COLOR 13
-#define KEY_CLOCKSTROKE_COLOR 12
-#define KEY_DISCONNECT_WARNING 2
-
-#define LONG_HAND_MARGIN  10
-#define SHORT_HAND_MARGIN 30
-#define FINAL_RADIUS 65
-#define CENTER_RADIUS 8
-
-#define ANIMATION_DURATION 500
-#define ANIMATION_DELAY    600
-
-typedef struct {
-	int hours;
-	int minutes;
-	char mday[3];
-} Time;
+#include "main.h"
+#include "display_weekdays.h"
 
 static Window *s_main_window;
 static Layer *s_canvas_layer;
@@ -36,6 +16,8 @@ static bool s_disconnect_warning = false;
 static bool s_is_connected = false;
 
 static GBitmap *s_bluetooth_icon;
+
+
 
 /*************************** AnimationImplementation **************************/
 
@@ -118,11 +100,14 @@ static void update_proc(Layer *layer, GContext *ctx) {
 	if(!s_animating) {
 		// Month bubble
 		
+    // TYPE A:
 		graphics_fill_circle(ctx, s_month_center, 20);
+    
 		graphics_draw_circle(ctx, s_month_center, 20);
 	
-		graphics_context_set_text_color(ctx, s_color_stroke);
-		graphics_draw_text(ctx, s_last_time.mday, fonts_get_system_font(FONT_KEY_LECO_20_BOLD_NUMBERS), GRect(4, 132, 40, 161), GTextOverflowModeFill, GTextAlignmentCenter, NULL);
+    graphics_context_set_text_color(ctx, s_color_stroke);
+		// TYPE A:
+    //graphics_draw_text(ctx, s_last_time.mday, fonts_get_system_font(FONT_KEY_LECO_20_BOLD_NUMBERS), GRect(4, 132, 40, 161), GTextOverflowModeFill, GTextAlignmentCenter, NULL);
 	}
 	// White clockface
 	
@@ -132,10 +117,17 @@ static void update_proc(Layer *layer, GContext *ctx) {
 	// Draw outline
 	graphics_draw_circle(ctx, s_center, s_radius);
 
+  // TYPE B:
+  graphics_fill_circle(ctx, s_month_center, 18);
+  graphics_draw_text(ctx, s_last_time.mday, fonts_get_system_font(FONT_KEY_LECO_20_BOLD_NUMBERS), GRect(4, 132, 40, 161), GTextOverflowModeFill, GTextAlignmentCenter, NULL);
+  
 	// Don't use current time while animating
 	Time mode_time = (s_animating) ? s_anim_time : s_last_time;
 
-	graphics_context_set_stroke_width(ctx, 4);
+  
+  draw_weekdays(0, layer, ctx, s_color_stroke);
+  
+	graphics_context_set_stroke_width(ctx, 5);
 	
 	// Adjust for minutes through the hour
 	float minute_angle = TRIG_MAX_ANGLE * mode_time.minutes / 60;
@@ -391,16 +383,19 @@ static void init() {
 		.update = hands_update
 	};
 	animate(2 * ANIMATION_DURATION, ANIMATION_DELAY, &hands_impl, true);
-	
+ 
 	app_message_register_inbox_received(inbox_received_handler);
 	app_message_open(app_message_inbox_size_maximum(), app_message_outbox_size_maximum());
+  
+  init_weekdays();
 }
 
 static void deinit() {
+  deinit_weekdays();
 	window_destroy(s_main_window);
 }
 
-int main() {
+int main(void) {
 	init();
 	app_event_loop();
 	deinit();
