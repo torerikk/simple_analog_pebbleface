@@ -1,5 +1,5 @@
 #include "main.h"
-#include "display_weekdays.h"
+// #include "display_weekdays.h"
 
 static Window *s_main_window;
 static Layer *s_canvas_layer;
@@ -124,8 +124,8 @@ static void update_proc(Layer *layer, GContext *ctx) {
 	// Don't use current time while animating
 	Time mode_time = (s_animating) ? s_anim_time : s_last_time;
 
-  
-  draw_weekdays(0, layer, ctx, s_color_stroke);
+  // Uncomment to show weekday letters. Does not indicate current day yet.
+  //draw_weekdays(0, layer, ctx, s_color_stroke);
   
 	graphics_context_set_stroke_width(ctx, 5);
 	
@@ -205,8 +205,8 @@ static void window_load(Window *window) {
 	image_frame.origin.y -= image_size.h / 2;
 
 	s_connection_bmp_layer = bitmap_layer_create(image_frame);
-	bitmap_layer_set_bitmap(s_connection_bmp_layer, s_bluetooth_icon);
-	bitmap_layer_set_compositing_mode(s_connection_bmp_layer, GCompOpOr);
+	bitmap_layer_set_compositing_mode(s_connection_bmp_layer, GCompOpSet);
+  bitmap_layer_set_bitmap(s_connection_bmp_layer, s_bluetooth_icon);
 	layer_set_hidden(bitmap_layer_get_layer(s_connection_bmp_layer), true);
 
 	s_canvas_layer = layer_create(window_bounds);
@@ -216,9 +216,9 @@ static void window_load(Window *window) {
 	layer_set_update_proc(s_connection_layer, connection_update_proc);
 	
 	layer_add_child(window_layer, s_connection_layer);
-	layer_add_child(window_layer, bitmap_layer_get_layer(s_connection_bmp_layer));
+	
 	layer_add_child(window_layer, s_canvas_layer);
-	//layer_add_child(window_layer, text_layer_get_layer(s_connection_layer));
+  layer_add_child(window_layer, bitmap_layer_get_layer(s_connection_bmp_layer));
 	
 	if (persist_exists(KEY_BACKGROUND_COLOR)) {
 		int background_color = persist_read_int(KEY_BACKGROUND_COLOR);
@@ -387,11 +387,13 @@ static void init() {
 	app_message_register_inbox_received(inbox_received_handler);
 	app_message_open(app_message_inbox_size_maximum(), app_message_outbox_size_maximum());
   
-  init_weekdays();
+  // Uncomment to show weekday letters. Does not indicate current day yet.
+  //init_weekdays();
 }
 
 static void deinit() {
-  deinit_weekdays();
+  // Uncomment to show weekday letters. Does not indicate current day yet.
+  //deinit_weekdays();
 	window_destroy(s_main_window);
 }
 

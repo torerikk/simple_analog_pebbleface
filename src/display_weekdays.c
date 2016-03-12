@@ -70,14 +70,14 @@ void init_weekdays(void) {
   s_sat_path_ptr = gpath_create(&S_PATH_INFO);
   s_sun_path_ptr = gpath_create(&S_PATH_INFO);
   gpath_rotate_to(s_mon_path_ptr, TRIG_MAX_ANGLE / 360 * 37);
-  gpath_rotate_to(s_tue_path_ptr, TRIG_MAX_ANGLE / 360 * 24);
+  gpath_rotate_to(s_tue_path_ptr, TRIG_MAX_ANGLE / 360 * 32);
   gpath_rotate_to(s_wed_path_ptr, TRIG_MAX_ANGLE / 360 * 14);
   gpath_rotate_to(s_fri_path_ptr, TRIG_MAX_ANGLE / 360 * -14);
   gpath_rotate_to(s_sat_path_ptr, TRIG_MAX_ANGLE / 360 * -24);
   gpath_rotate_to(s_sun_path_ptr, TRIG_MAX_ANGLE / 360 * -37);
 
-  gpath_move_to(s_mon_path_ptr, GPoint(34, 117));
-  gpath_move_to(s_tue_path_ptr, GPoint(43, 126));
+  gpath_move_to(s_mon_path_ptr, GPoint(35, 118));
+  gpath_move_to(s_tue_path_ptr, GPoint(45, 125));
   gpath_move_to(s_wed_path_ptr, GPoint(55, 131));  
   gpath_move_to(s_thu_path_ptr, GPoint(67, 133));
   gpath_move_to(s_fri_path_ptr, GPoint(79, 133));
