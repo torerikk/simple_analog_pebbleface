@@ -1,6 +1,8 @@
 {
     "author": "Tor-Erik Klausen",
-    "dependencies": {},
+    "dependencies": {
+        "pebble-clay": "^1.0.2"
+    },
     "keywords": [],
     "name": "tek-watch01",
     "pebble": {

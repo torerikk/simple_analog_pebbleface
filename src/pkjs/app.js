@@ -1,4 +1,8 @@
-Pebble.addEventListener('ready', function() {
+var Clay = require('pebble-clay');
+var clayConfig = require('./config');
+var clay = new Clay(clayConfig);
+
+/*Pebble.addEventListener('ready', function() {
   console.log('PebbleKit JS ready!');
 });
 
@@ -24,4 +28,4 @@ Pebble.addEventListener('webviewclosed', function(e) {
       console.log('Send failed!');
     });
   }
-});
+});*/
