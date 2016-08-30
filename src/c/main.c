@@ -14,10 +14,32 @@ static int s_center_circle_radius = 0;
 static bool s_animating = true;
 static bool s_disconnect_warning = false;
 static bool s_is_connected = false;
-
+static int s_final_radius = 0;
+static int s_bubble_radius = 20;
 static GBitmap *s_bluetooth_icon;
 
 
+static int find_max_face_radius(const GRect bounds) {
+  int radius_w = (bounds.size.w / 2) - 6;
+  int radius_h = (bounds.size.h / 2) - 6;
+  if(radius_h > radius_w) {
+	  return radius_w;
+  } else {
+    return radius_h;
+  }
+}
+
+static GPoint find_month_center(const GRect bounds) {
+  int pY = (bounds.size.h - s_bubble_radius - 4);
+  int pX = (s_bubble_radius + 3);
+  return (GPoint) {.x = pX, .y = pY };
+}
+
+static GRect find_month_rect(const GRect bounds) {
+  int pY1 = bounds.size.h - (s_bubble_radius * 2) + 4;
+  int pY2 = bounds.size.h - 7;
+  return GRect(4, pY1, 40, pY2);
+}
 
 /*************************** AnimationImplementation **************************/
 
@@ -83,13 +105,19 @@ static void connection_update_proc(Layer *layer, GContext *ctx) {
 			graphics_context_set_fill_color(ctx, GColorRed);
 			layer_set_hidden(bitmap_layer_get_layer(s_connection_bmp_layer), false);
 			// Bluetooth bubble
-			graphics_fill_circle(ctx, s_icon_center, 20);
-			graphics_draw_circle(ctx, s_icon_center, 20);	
+			graphics_fill_circle(ctx, s_icon_center, s_bubble_radius);
+			graphics_draw_circle(ctx, s_icon_center, s_bubble_radius);	
 		}
 	}
 }
 
 static void update_proc(Layer *layer, GContext *ctx) {
+  GRect bounds = layer_get_unobstructed_bounds(layer);
+  s_center = grect_center_point(&bounds);
+  
+  s_final_radius = find_max_face_radius(bounds);
+  s_month_center = find_month_center(bounds);
+  
 	graphics_context_set_stroke_color(ctx, s_color_stroke);
 	graphics_context_set_stroke_width(ctx, 3);
 
@@ -98,12 +126,13 @@ static void update_proc(Layer *layer, GContext *ctx) {
 	// Same color used for clockface and month bubble.
 	graphics_context_set_fill_color(ctx, s_color_face_bg);
 	if(!s_animating) {
+    s_radius = s_final_radius;
 		// Month bubble
 		
     // TYPE A:
-		graphics_fill_circle(ctx, s_month_center, 20);
+		graphics_fill_circle(ctx, s_month_center, s_bubble_radius);
     
-		graphics_draw_circle(ctx, s_month_center, 20);
+		graphics_draw_circle(ctx, s_month_center, s_bubble_radius);
 	
     graphics_context_set_text_color(ctx, s_color_stroke);
 		// TYPE A:
@@ -117,10 +146,12 @@ static void update_proc(Layer *layer, GContext *ctx) {
 	// Draw outline
 	graphics_draw_circle(ctx, s_center, s_radius);
 
-  // TYPE B:
-  graphics_fill_circle(ctx, s_month_center, 18);
-  graphics_draw_text(ctx, s_last_time.mday, fonts_get_system_font(FONT_KEY_LECO_20_BOLD_NUMBERS), GRect(4, 132, 40, 161), GTextOverflowModeFill, GTextAlignmentCenter, NULL);
-  
+  if(!s_animating) {
+    // TYPE B:
+    graphics_fill_circle(ctx, s_month_center, s_bubble_radius - 2);
+    GRect month_rect = find_month_rect(bounds);
+    graphics_draw_text(ctx, s_last_time.mday, fonts_get_system_font(FONT_KEY_LECO_20_BOLD_NUMBERS), month_rect, GTextOverflowModeFill, GTextAlignmentCenter, NULL);
+  }
 	// Don't use current time while animating
 	Time mode_time = (s_animating) ? s_anim_time : s_last_time;
 
@@ -188,16 +219,20 @@ static void deinit_connection_warning() {
 
 static void window_load(Window *window) {
 	Layer *window_layer = window_get_root_layer(window);
-	GRect window_bounds = layer_get_bounds(window_layer);
+  GRect unobstructed_bounds = layer_get_unobstructed_bounds(window_layer);
 
-	s_center = grect_center_point(&window_bounds);
-	s_month_center = (GPoint) {.x = 23, .y = 144 };
+	//GRect window_bounds = layer_get_bounds(window_layer);
+  s_final_radius = find_max_face_radius(unobstructed_bounds);
+
+  s_center = grect_center_point(&unobstructed_bounds);
+	s_month_center = find_month_center(unobstructed_bounds);
 
 	s_bluetooth_icon = gbitmap_create_with_resource(RESOURCE_ID_BLUETOOTH_ICON);
 	if (!s_bluetooth_icon) {
 		APP_LOG(APP_LOG_LEVEL_ERROR, "Image is NULL!");
 	}
 
+  // TODO: find s_icon_center based on unobstructed view.
 	s_icon_center = (GPoint) {.x = 121, .y = 23 };
 	GSize image_size = gbitmap_get_bounds(s_bluetooth_icon).size;
 	GRect image_frame = GRect(s_icon_center.x, s_icon_center.y, image_size.w, image_size.h);
@@ -209,10 +244,10 @@ static void window_load(Window *window) {
   bitmap_layer_set_bitmap(s_connection_bmp_layer, s_bluetooth_icon);
 	layer_set_hidden(bitmap_layer_get_layer(s_connection_bmp_layer), true);
 
-	s_canvas_layer = layer_create(window_bounds);
+	s_canvas_layer = layer_create(unobstructed_bounds);
 	layer_set_update_proc(s_canvas_layer, update_proc);
 	
-	s_connection_layer = layer_create(window_bounds);
+	s_connection_layer = layer_create(unobstructed_bounds);
 	layer_set_update_proc(s_connection_layer, connection_update_proc);
 	
 	layer_add_child(window_layer, s_connection_layer);
@@ -220,8 +255,8 @@ static void window_load(Window *window) {
 	layer_add_child(window_layer, s_canvas_layer);
   layer_add_child(window_layer, bitmap_layer_get_layer(s_connection_bmp_layer));
 	
-	if (persist_exists(KEY_BACKGROUND_COLOR)) {
-		int background_color = persist_read_int(KEY_BACKGROUND_COLOR);
+	if (persist_exists(MESSAGE_KEY_backgroundColor)) {
+		int background_color = persist_read_int(MESSAGE_KEY_backgroundColor);
 		s_color_bg = GColorFromHEX(background_color);
 	} else {
 		s_color_bg = GColorWhite;
@@ -229,26 +264,26 @@ static void window_load(Window *window) {
 	
 	window_set_background_color(window, s_color_bg);
 	
-	if (persist_exists(KEY_CLOCKFACE_COLOR)) {
+	if (persist_exists(MESSAGE_KEY_clockfaceColor)) {
 		APP_LOG(APP_LOG_LEVEL_INFO, "face color set");
-		int clockface_color = persist_read_int(KEY_CLOCKFACE_COLOR);
+		int clockface_color = persist_read_int(MESSAGE_KEY_clockfaceColor);
 		s_color_face_bg = GColorFromHEX(clockface_color);
 	} else {
 		s_color_face_bg = GColorWhite;
 		APP_LOG(APP_LOG_LEVEL_INFO, "face default color");
 	}
 	
-	if (persist_exists(KEY_CLOCKSTROKE_COLOR)) {
+	if (persist_exists(MESSAGE_KEY_clockStrokeColor)) {
 		APP_LOG(APP_LOG_LEVEL_INFO, "clock stroke set");
-		int clockstroke_color = persist_read_int(KEY_CLOCKSTROKE_COLOR);
+		int clockstroke_color = persist_read_int(MESSAGE_KEY_clockStrokeColor);
 		s_color_stroke = GColorFromHEX(clockstroke_color);
 	} else {
 		APP_LOG(APP_LOG_LEVEL_INFO, "clock stroke default");
 		s_color_stroke = GColorBlack;
 	}
 	
-	if(persist_exists(KEY_DISCONNECT_WARNING)) {
-		s_disconnect_warning = persist_read_bool(KEY_DISCONNECT_WARNING);
+	if(persist_exists(MESSAGE_KEY_disconnectWarning)) {
+		s_disconnect_warning = persist_read_bool(MESSAGE_KEY_disconnectWarning);
 		if(s_disconnect_warning) {
 			init_connection_warning();
 		}
@@ -269,10 +304,10 @@ static void window_unload(Window *window) {
 /*********************************** App **************************************/
 
 static void inbox_received_handler(DictionaryIterator *iter, void *context) {
-	Tuple *background_color_t = dict_find(iter, KEY_BACKGROUND_COLOR);
-	Tuple *clockface_color_t = dict_find(iter, KEY_CLOCKFACE_COLOR);
-	Tuple *clockstroke_color_t = dict_find(iter, KEY_CLOCKSTROKE_COLOR);
-	Tuple *disconnect_warning_t = dict_find(iter, KEY_DISCONNECT_WARNING);
+	Tuple *background_color_t = dict_find(iter, MESSAGE_KEY_backgroundColor);
+	Tuple *clockface_color_t = dict_find(iter, MESSAGE_KEY_clockfaceColor);
+	Tuple *clockstroke_color_t = dict_find(iter, MESSAGE_KEY_clockStrokeColor);
+	Tuple *disconnect_warning_t = dict_find(iter, MESSAGE_KEY_disconnectWarning);
 	//Tuple *twenty_four_hour_format_t = dict_find(iter, KEY_TWENTY_FOUR_HOUR_FORMAT);
 	bool updateFace = false;
 
@@ -281,19 +316,19 @@ static void inbox_received_handler(DictionaryIterator *iter, void *context) {
 			init_connection_warning();
 		}
 		s_disconnect_warning = true;
-		persist_write_bool(KEY_DISCONNECT_WARNING, s_disconnect_warning);
+		persist_write_bool(MESSAGE_KEY_disconnectWarning, s_disconnect_warning);
 	} else {
 		if(s_disconnect_warning == true) {
 			deinit_connection_warning();
 		}
 		s_disconnect_warning = false;
-		persist_write_bool(KEY_DISCONNECT_WARNING, s_disconnect_warning);
+		persist_write_bool(MESSAGE_KEY_disconnectWarning, s_disconnect_warning);
 	}
 	
 	if (background_color_t) {
 		int background_color = background_color_t->value->int32;
 
-		persist_write_int(KEY_BACKGROUND_COLOR, background_color);
+		persist_write_int(MESSAGE_KEY_backgroundColor, background_color);
 		
 		s_color_bg = GColorFromHEX(background_color);
 		window_set_background_color(s_main_window, s_color_bg);
@@ -304,7 +339,7 @@ static void inbox_received_handler(DictionaryIterator *iter, void *context) {
 		
 		int clockface_color = clockface_color_t->value->int32;
 		
-		persist_write_int(KEY_CLOCKFACE_COLOR, clockface_color);
+		persist_write_int(MESSAGE_KEY_clockfaceColor, clockface_color);
 		
 		s_color_face_bg = GColorFromHEX(clockface_color);
 		APP_LOG(APP_LOG_LEVEL_INFO,  "clock face color set and saved: %d", clockface_color );
@@ -314,7 +349,7 @@ static void inbox_received_handler(DictionaryIterator *iter, void *context) {
 	if (clockstroke_color_t) {
 		int clockstroke_color = clockstroke_color_t->value->int32;
 
-		persist_write_int(KEY_CLOCKSTROKE_COLOR, clockstroke_color);
+		persist_write_int(MESSAGE_KEY_clockStrokeColor, clockstroke_color);
 		
 		s_color_stroke = GColorFromHEX(clockstroke_color);
 		updateFace = true;
@@ -339,7 +374,7 @@ static int anim_percentage(AnimationProgress dist_normalized, int max) {
 }
 
 static void radius_update(Animation *anim, AnimationProgress dist_normalized) {
-	s_radius = anim_percentage(dist_normalized, FINAL_RADIUS);
+	s_radius = anim_percentage(dist_normalized, s_final_radius);
 	
 	if(s_radius < (int)CENTER_RADIUS) {
 		s_center_circle_radius = s_radius;

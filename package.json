@@ -1,0 +1,57 @@
+{
+    "author": "Tor-Erik Klausen",
+    "dependencies": {},
+    "keywords": [],
+    "name": "tek-watch01",
+    "pebble": {
+        "capabilities": [
+            "configurable"
+        ],
+        "displayName": "TEK Watch01",
+        "enableMultiJS": true,
+        "messageKeys": [
+            "disconnectWarning",
+            "backgroundColor",
+            "clockStrokeColor",
+            "clockfaceColor"
+        ],
+        "projectType": "native",
+        "resources": {
+            "media": [
+                {
+                    "file": "images/menu-icon-bw.png",
+                    "menuIcon": true,
+                    "name": "MENU_ICON",
+                    "targetPlatforms": [
+                        "basalt",
+                        "chalk",
+                        "diorite"
+                    ],
+                    "type": "bitmap"
+                },
+                {
+                    "file": "images/bluetooth.png",
+                    "memoryFormat": "Smallest",
+                    "name": "BLUETOOTH_ICON",
+                    "targetPlatforms": [
+                        "basalt",
+                        "chalk",
+                        "diorite"
+                    ],
+                    "type": "bitmap"
+                }
+            ]
+        },
+        "sdkVersion": "3",
+        "targetPlatforms": [
+            "basalt",
+            "chalk",
+            "diorite"
+        ],
+        "uuid": "62fe76eb-274c-4ddc-8cd5-746629a74162",
+        "watchapp": {
+            "watchface": true
+        }
+    },
+    "version": "1.4.0"
+}
