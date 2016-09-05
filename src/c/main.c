@@ -111,6 +111,24 @@ static void connection_update_proc(Layer *layer, GContext *ctx) {
 	}
 }
 
+static void update_proc_v2(Layer *layer, GContext *ctx) {
+#if defined(PBL_RECT)
+  printf("This is a rectangular display!");
+#elif defined(PBL_ROUND)
+  GRect rect_bounds = grect_inset(layer_get_unobstructed_bounds(layer), GEdgeInsets(3));
+  uint16_t inset_thickness = 10; 
+  
+  graphics_context_set_fill_color(ctx, GColorYellow);
+  graphics_context_set_stroke_color(ctx, GColorLimerick);
+  graphics_context_set_stroke_width(ctx, 40);
+    
+  graphics_draw_arc(ctx, rect_bounds, GOvalScaleModeFitCircle, DEG_TO_TRIGANGLE(0), TRIG_MAX_ANGLE);
+  // Fill a radial section of a circle
+  graphics_fill_radial(ctx, rect_bounds, GOvalScaleModeFitCircle, rect_bounds.size.w , 0, TRIG_MAX_ANGLE);
+  printf("This is a round display!");
+#endif
+}
+
 static void update_proc(Layer *layer, GContext *ctx) {
   GRect bounds = layer_get_unobstructed_bounds(layer);
   s_center = grect_center_point(&bounds);
@@ -144,7 +162,9 @@ static void update_proc(Layer *layer, GContext *ctx) {
 	graphics_fill_circle(ctx, s_center, s_radius);
 
 	// Draw outline
-	graphics_draw_circle(ctx, s_center, s_radius);
+	//graphics_draw_circle(ctx, s_center, s_radius);
+  graphics_context_set_fill_color(ctx, s_color_stroke);
+  graphics_fill_radial(ctx, grect_inset(layer_get_bounds(layer), GEdgeInsets(3)), GOvalScaleModeFitCircle, 5, 0, TRIG_MAX_ANGLE);
 
   if(!s_animating) {
     // TYPE B:
@@ -245,7 +265,7 @@ static void window_load(Window *window) {
 	layer_set_hidden(bitmap_layer_get_layer(s_connection_bmp_layer), true);
 
 	s_canvas_layer = layer_create(unobstructed_bounds);
-	layer_set_update_proc(s_canvas_layer, update_proc);
+	layer_set_update_proc(s_canvas_layer, update_proc_v2);
 	
 	s_connection_layer = layer_create(unobstructed_bounds);
 	layer_set_update_proc(s_connection_layer, connection_update_proc);
