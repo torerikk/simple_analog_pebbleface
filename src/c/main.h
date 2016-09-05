@@ -1,7 +1,8 @@
 #pragma once
 
 #include <pebble.h>
-#include "src/c/models.h"
+#include "./models.h"
+#include "./face.h"
 
 #define ANTIALIASING true
 
